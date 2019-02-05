@@ -49,7 +49,7 @@
 #include "compiler/glsl/list.h"
 #include "util/simple_mtx.h"
 #include "util/u_dynarray.h"
-
+#include "util/u_queue.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -5138,6 +5138,11 @@ struct gl_context
    struct hash_table_u64 *ResidentTextureHandles;
    struct hash_table_u64 *ResidentImageHandles;
    /*@}*/
+
+   /**
+    * \name GL_parallel_shader_compile
+    */
+   struct util_queue compile_queue;
 };
 
 /**
