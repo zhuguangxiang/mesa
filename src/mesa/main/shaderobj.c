@@ -123,6 +123,7 @@ void
 _mesa_delete_shader(struct gl_context *ctx, struct gl_shader *sh)
 {
    _mesa_shader_spirv_data_reference(&sh->spirv_data, NULL);
+   util_queue_fence_wait(&sh->compile_completion);
    free((void *)sh->Source);
    free((void *)sh->FallbackSource);
    free(sh->Label);
@@ -142,12 +143,11 @@ _mesa_delete_linked_shader(struct gl_context *ctx,
    ralloc_free(sh);
 }
 
-
 /**
  * Lookup a GLSL shader object.
  */
 struct gl_shader *
-_mesa_lookup_shader(struct gl_context *ctx, GLuint name)
+_mesa_lookup_shader(struct gl_context *ctx, GLuint name, GLboolean wait)
 {
    if (name) {
       struct gl_shader *sh = (struct gl_shader *)
@@ -159,17 +159,18 @@ _mesa_lookup_shader(struct gl_context *ctx, GLuint name)
       if (sh && sh->Type == GL_SHADER_PROGRAM_MESA) {
          return NULL;
       }
+      if (wait)
+         util_queue_fence_wait(&sh->compile_completion);
       return sh;
    }
    return NULL;
 }
 
-
 /**
  * As above, but record an error if shader is not found.
  */
 struct gl_shader *
-_mesa_lookup_shader_err(struct gl_context *ctx, GLuint name, const char *caller)
+_mesa_lookup_shader_err(struct gl_context *ctx, GLuint name, const char *caller, GLboolean wait)
 {
    if (!name) {
       _mesa_error(ctx, GL_INVALID_VALUE, "%s", caller);
@@ -186,6 +187,8 @@ _mesa_lookup_shader_err(struct gl_context *ctx, GLuint name, const char *caller)
          _mesa_error(ctx, GL_INVALID_OPERATION, "%s", caller);
          return NULL;
       }
+      if (wait)
+         util_queue_fence_wait(&sh->compile_completion);
       return sh;
    }
 }

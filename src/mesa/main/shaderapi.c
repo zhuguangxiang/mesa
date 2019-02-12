@@ -241,7 +241,7 @@ is_program(struct gl_context *ctx, GLuint name)
 static GLboolean
 is_shader(struct gl_context *ctx, GLuint name)
 {
-   struct gl_shader *shader = _mesa_lookup_shader(ctx, name);
+   struct gl_shader *shader = _mesa_lookup_shader(ctx, name, GL_FALSE);
    return shader ? GL_TRUE : GL_FALSE;
 }
 
@@ -282,7 +282,7 @@ attach_shader_err(struct gl_context *ctx, GLuint program, GLuint shader,
    if (!shProg)
       return;
 
-   sh = _mesa_lookup_shader_err(ctx, shader, caller);
+   sh = _mesa_lookup_shader_err(ctx, shader, caller, GL_TRUE);
    if (!sh) {
       return;
    }
@@ -323,7 +323,7 @@ attach_shader_no_error(struct gl_context *ctx, GLuint program, GLuint shader)
    struct gl_shader *sh;
 
    shProg = _mesa_lookup_shader_program(ctx, program);
-   sh = _mesa_lookup_shader(ctx, shader);
+   sh = _mesa_lookup_shader(ctx, shader, GL_TRUE);
 
    attach_shader(ctx, shProg, sh);
 }
@@ -416,7 +416,7 @@ delete_shader(struct gl_context *ctx, GLuint shader)
 {
    struct gl_shader *sh;
 
-   sh = _mesa_lookup_shader_err(ctx, shader, "glDeleteShader");
+   sh = _mesa_lookup_shader_err(ctx, shader, "glDeleteShader", GL_FALSE);
    if (!sh)
       return;
 
@@ -952,9 +952,11 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname,
 static void
 get_shaderiv(struct gl_context *ctx, GLuint name, GLenum pname, GLint *params)
 {
-   struct gl_shader *shader =
-      _mesa_lookup_shader_err(ctx, name, "glGetShaderiv");
-
+   GLboolean wait = GL_TRUE;
+   if (pname == GL_COMPLETION_STATUS_ARB || pname == GL_SPIR_V_BINARY_ARB) {
+      wait = GL_FALSE;
+   }
+   struct gl_shader *shader = _mesa_lookup_shader_err(ctx, name, "glGetShaderiv", wait);
    if (!shader) {
       return;
    }
@@ -1034,7 +1036,7 @@ get_shader_info_log(struct gl_context *ctx, GLuint shader, GLsizei bufSize,
       return;
    }
 
-   sh = _mesa_lookup_shader_err(ctx, shader, "glGetShaderInfoLog(shader)");
+   sh = _mesa_lookup_shader_err(ctx, shader, "glGetShaderInfoLog(shader)", GL_TRUE);
    if (!sh) {
       return;
    }
@@ -1057,7 +1059,7 @@ get_shader_source(struct gl_context *ctx, GLuint shader, GLsizei maxLength,
       return;
    }
 
-   sh = _mesa_lookup_shader_err(ctx, shader, "glGetShaderSource");
+   sh = _mesa_lookup_shader_err(ctx, shader, "glGetShaderSource", GL_FALSE);
    if (!sh) {
       return;
    }
@@ -1138,6 +1140,7 @@ _mesa_compile_shader(struct gl_context *ctx, struct gl_shader *sh)
       /* this call will set the shader->CompileStatus field to indicate if
        * compilation was successful.
        */
+      // this should be done via deferred compilation
       _mesa_glsl_compile_shader(ctx, sh, false, false, false);
 
       if (ctx->_Shader->Flags & GLSL_LOG) {
@@ -1489,7 +1492,7 @@ _mesa_CompileShader(GLuint shaderObj)
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glCompileShader %u\n", shaderObj);
    _mesa_compile_shader(ctx, _mesa_lookup_shader_err(ctx, shaderObj,
-                                                     "glCompileShader"));
+                                                     "glCompileShader", GL_TRUE));
 }
 
 
@@ -1920,7 +1923,7 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
    struct gl_shader *sh;
 
    if (!no_error) {
-      sh = _mesa_lookup_shader_err(ctx, shaderObj, "glShaderSourceARB");
+      sh = _mesa_lookup_shader_err(ctx, shaderObj, "glShaderSourceARB", GL_FALSE);
       if (!sh)
          return;
 
@@ -1929,7 +1932,7 @@ shader_source(struct gl_context *ctx, GLuint shaderObj, GLsizei count,
          return;
       }
    } else {
-      sh = _mesa_lookup_shader(ctx, shaderObj);
+      sh = _mesa_lookup_shader(ctx, shaderObj, GL_TRUE);
    }
 
    /*
@@ -2213,7 +2216,7 @@ _mesa_ShaderBinary(GLint n, const GLuint* shaders, GLenum binaryformat,
    }
 
    for (int i = 0; i < n; ++i) {
-      sh[i] = _mesa_lookup_shader_err(ctx, shaders[i], "glShaderBinary");
+      sh[i] = _mesa_lookup_shader_err(ctx, shaders[i], "glShaderBinary", GL_TRUE);
       if (!sh[i])
          return;
    }
@@ -2519,7 +2522,7 @@ _mesa_CreateShaderProgramv(GLenum type, GLsizei count,
    }
 
    if (shader) {
-      struct gl_shader *sh = _mesa_lookup_shader(ctx, shader);
+      struct gl_shader *sh = _mesa_lookup_shader(ctx, shader, GL_TRUE);
 
       _mesa_ShaderSource(shader, count, strings, NULL);
       _mesa_compile_shader(ctx, sh);

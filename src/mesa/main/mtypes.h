@@ -2658,6 +2658,9 @@ struct gl_shader
 
    /* ARB_gl_spirv related data */
    struct gl_shader_spirv_data *spirv_data;
+
+   /* parallel compile completion fence */
+   struct util_queue_fence compile_completion;
 };
 
 

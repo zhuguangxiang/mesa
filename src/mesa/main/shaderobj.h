@@ -58,10 +58,10 @@ _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
                        struct gl_shader *sh);
 
 extern struct gl_shader *
-_mesa_lookup_shader(struct gl_context *ctx, GLuint name);
+_mesa_lookup_shader(struct gl_context *ctx, GLuint name, GLboolean wait);
 
 extern struct gl_shader *
-_mesa_lookup_shader_err(struct gl_context *ctx, GLuint name, const char *caller);
+_mesa_lookup_shader_err(struct gl_context *ctx, GLuint name, const char *caller, GLboolean wait);
 
 
 
