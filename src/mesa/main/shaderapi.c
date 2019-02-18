@@ -690,10 +690,7 @@ get_programiv(struct gl_context *ctx, GLuint program, GLenum pname,
       *params = shProg->DeletePending;
       return;
    case GL_COMPLETION_STATUS_ARB:
-      if (ctx->Driver.GetShaderProgramCompletionStatus)
-         *params = ctx->Driver.GetShaderProgramCompletionStatus(ctx, shProg);
-      else
-         *params = GL_TRUE;
+      *params = util_queue_fence_is_signalled(&shProg->link_completion);
       return;
    case GL_LINK_STATUS:
       *params = shProg->data->LinkStatus ? GL_TRUE : GL_FALSE;
@@ -969,8 +966,7 @@ get_shaderiv(struct gl_context *ctx, GLuint name, GLenum pname, GLint *params)
       *params = shader->DeletePending;
       break;
    case GL_COMPLETION_STATUS_ARB:
-      /* _mesa_glsl_compile_shader is not offloaded to other threads. */
-      *params = GL_TRUE;
+      *params = util_queue_fence_is_signalled(&shader->compile_completion);
       return;
    case GL_COMPILE_STATUS:
       *params = shader->CompileStatus ? GL_TRUE : GL_FALSE;

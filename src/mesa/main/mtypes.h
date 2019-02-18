@@ -3072,6 +3072,11 @@ struct gl_shader_program
     * #extension ARB_fragment_coord_conventions: enable
     */
    GLboolean ARB_fragment_coord_conventions_enable;
+
+   /**
+    * A fence to wait on for parallel glLinkProgram to complete.
+    */
+   struct util_queue_fence link_completion;
 };
 
 

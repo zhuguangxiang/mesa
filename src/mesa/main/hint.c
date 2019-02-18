@@ -138,8 +138,7 @@ _mesa_MaxShaderCompilerThreadsKHR(GLuint count)
 
    ctx->Hint.MaxShaderCompilerThreads = count;
 
-   if (ctx->Driver.SetMaxShaderCompilerThreads)
-      ctx->Driver.SetMaxShaderCompilerThreads(ctx, count);
+   util_queue_adjust_num_threads(&ctx->compile_queue, count);
 }
 
 /**********************************************************************/
