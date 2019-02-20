@@ -1099,6 +1099,49 @@ set_shader_source(struct gl_shader *sh, const GLchar *source)
 #endif
 }
 
+/* Helper functions to deal with parallel shader compilation */
+static bool
+can_defer_compile(gl_context *ctx)
+{
+   return ctx->Hint.MaxShaderCompilerThreads > 0;
+}
+struct compile_task_data {
+   struct gl_context *ctx;
+   struct gl_shader *sh;
+};
+
+static void
+deferred_compile_shader(void *data, int thread_index)
+{
+   struct compile_task_data *task = (struct compile_task_data *) data;
+
+   _mesa_glsl_compile_shader(task->ctx, task->sh, false, false, false);
+}
+
+static void
+deferred_compile_cleanup(void *data, int thread_index)
+{
+   free(data);
+}
+
+static bool
+queue_compile_shader(struct gl_context *ctx, struct gl_shader *sh)
+{
+   if (!can_defer_compile(ctx)) return false;
+
+   struct compile_task_data *task = malloc(sizeof(struct compile_task_data));
+   if (!task) return false;
+   task->ctx = ctx;
+   task->sh = sh;
+
+   util_queue_add_job(&ctx->compile_queue,
+                      task,
+                      &sh->compile_completion,
+                      deferred_compile_shader,
+                      deferred_compile_cleanup);
+   return true;
+}
+
 
 /**
  * Compile a shader.
@@ -1136,8 +1179,9 @@ _mesa_compile_shader(struct gl_context *ctx, struct gl_shader *sh)
       /* this call will set the shader->CompileStatus field to indicate if
        * compilation was successful.
        */
-      // this should be done via deferred compilation
-      _mesa_glsl_compile_shader(ctx, sh, false, false, false);
+      if (!queue_compile_shader(ctx, sh)) {
+         _mesa_glsl_compile_shader(ctx, sh, false, false, false);
+      }
 
       if (ctx->_Shader->Flags & GLSL_LOG) {
          _mesa_write_shader_to_file(sh);
