@@ -284,7 +284,7 @@ _mesa_SpecializeShaderARB(GLuint shader,
       return;
    }
 
-   sh = _mesa_lookup_shader_err(ctx, shader, "glSpecializeShaderARB", GL_TRUE);
+   sh = _mesa_lookup_shader_err(ctx, shader, "glSpecializeShaderARB");
    if (!sh)
       return;
 

@@ -4120,6 +4120,17 @@ struct gl_constants
 
    /** GL_ARB_gl_spirv */
    struct spirv_supported_capabilities SpirVCapabilities;
+
+   /*
+    * Defer certain operations to a thread pool.
+    *
+    * When DeferLinkProgram is set, these functions must be thread-safe
+    *
+    *   ctx->Driver.NewProgram
+    *   ctx->Driver.DeleteProgram
+    *   ctx->Driver.LinkShader
+    */
+   bool DeferLinkProgram;
 };
 
 
